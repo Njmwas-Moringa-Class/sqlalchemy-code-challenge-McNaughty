@@ -50,22 +50,45 @@ class Restaurant(Base):
     name = Column(String())
     price = Column(Integer)
 
-    customers = relationship("Customer", secondary=association_table, back_populates="restaurants")
     reviews = relationship("Review", back_populates="restaurant")
+    customers = relationship("Customer", secondary="reviews", back_populates="restaurants")
 
     def __repr__(self):
         return f'Restaurant: {self.name}'
+
+    @classmethod
+    def fanciest(cls, session):
+        """Class method to return the restaurant instance with the highest price"""
+        return session.query(cls).order_by(cls.price.desc()).first()
+
+    def all_reviews(self):
+        """Return a list of strings with all the reviews for this restaurant formatted as specified"""
+        formatted_reviews = []
+        for review in self.reviews:
+            formatted_review = f'Review for {self.name} by {review.customer.full_name()}: {review.star_rating} stars.'
+            formatted_reviews.append(formatted_review)
+        return formatted_reviews
+
+
 
 class Review(Base):
     __tablename__ = 'reviews'
 
     id = Column(Integer, primary_key=True)
     rest_id = Column(Integer, ForeignKey('restaurants.id'))
+    cust_id = Column(Integer, ForeignKey('customers.id'))
     review_text = Column(String())
     star_rating = Column(Integer)
 
     restaurant = relationship("Restaurant", back_populates="reviews")
-    customers = relationship("Customer", secondary=association_table, back_populates="reviews")
+    customer = relationship("Customer", back_populates="reviews")
 
     def __repr__(self):
-        return f'Review for {self.restaurant.name} by {", ".join([customer.first_name for customer in self.customers])}'
+        return f'Review for {self.restaurant.name} by {self.customer.first_name}'
+
+    def full_review(self, session):
+        """Returns a string formatted as 'Review for {restaurant name} by {customer's full name}: {review star_rating} stars'"""
+        restaurant_name = self.restaurant.name
+        customer_full_name = self.customer.full_name()
+        star_rating = self.star_rating
+        return f'Review for {restaurant_name} by {customer_full_name}: {star_rating} stars.'
