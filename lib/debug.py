@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker
 from models import Customer, Restaurant, Review
 
 # Create an engine to connect to your database
-engine = create_engine('sqlite:///example.db')
+engine = create_engine('sqlite:///restaurants.db')
 
 # Create a session to interact with the database
 Session = sessionmaker(bind=engine)
